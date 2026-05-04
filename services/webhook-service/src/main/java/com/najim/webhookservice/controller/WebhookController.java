@@ -23,6 +23,8 @@ public class WebhookController {
         }
 
         try {
+            System.out.println("CONTROLLER HIT - event: " + event);
+
             webhookService.process(payload);
             return ResponseEntity.ok("received");
         } catch (Exception e) {

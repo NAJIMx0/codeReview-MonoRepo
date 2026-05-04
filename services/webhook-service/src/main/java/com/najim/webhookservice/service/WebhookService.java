@@ -55,6 +55,8 @@ public class WebhookService {
 
     public void process(Map<String, Object> payload) {
 
+        System.out.println("SERVICE CALLED - files: " + payload.get("commits"));
+
         // Guard: only handle push events with commits
         List<Map<String, Object>> commits = (List<Map<String, Object>>) payload.get("commits");
         if (commits == null || commits.isEmpty()) {
@@ -90,7 +92,7 @@ public class WebhookService {
                 .changedFiles(files)
                 .receivedAt(LocalDateTime.now())
                 .build();
-
+        System.out.println("ABOUT TO SAVE - repo: " + repoName + " sha: " + commitSha);
         repository.save(event);
 
 
