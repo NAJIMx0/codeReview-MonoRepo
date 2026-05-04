@@ -53,35 +53,44 @@ public class WebhookService {
 //    }
 
 
-    public   void process(Map<String, Object> payload){
-        // 1. extract repoName
-        Map<String,Object> repo = (Map<String, Object>) payload.get("repository");
-        String RepoName = (String) repo.get("full_name");
+    public void process(Map<String, Object> payload) {
 
-        // 2. extract commitSha
-        Map<String,Object> headCommit = (Map<String, Object>) payload.get("head_commit");
-        String CommitSha = (String) headCommit.get("id");
-        // 3. loop commits, collect files
+        // Guard: only handle push events with commits
         List<Map<String, Object>> commits = (List<Map<String, Object>>) payload.get("commits");
+        if (commits == null || commits.isEmpty()) {
+            return; // ping event or empty push — skip
+        }
 
-        List<String> Files = new ArrayList<>();
+        // 1. Extract repoName
+        Map<String, Object> repo = (Map<String, Object>) payload.get("repository");
+        String repoName = (String) repo.get("full_name");
 
+        // 2. Extract commitSha safely
+        Map<String, Object> headCommit = (Map<String, Object>) payload.get("head_commit");
+        String commitSha = headCommit != null ? (String) headCommit.get("id") : "unknown";
+
+        // 3. Extract pusher name
+        Map<String, Object> pusher = (Map<String, Object>) payload.get("pusher");
+        String pusherName = pusher != null ? (String) pusher.get("name") : "unknown";
+
+        // 4. Collect changed files
+        List<String> files = new ArrayList<>();
         for (Map<String, Object> commit : commits) {
             List<String> modified = (List<String>) commit.get("modified");
             List<String> added = (List<String>) commit.get("added");
-            Files.addAll(modified);
-            Files.addAll(added);
+            if (modified != null) files.addAll(modified);
+            if (added != null) files.addAll(added);
         }
-        // 4. build PushEvent
+
+        // 5. Build and save
         PushEvent event = PushEvent.builder()
-                .repoName(RepoName)
-                .commitSha(CommitSha)
-                .changedFiles(Files)
+                .repoName(repoName)
+                .commitSha(commitSha)
+                .pusherName(pusherName)
+                .changedFiles(files)
                 .receivedAt(LocalDateTime.now())
                 .build();
 
-
-        // 5. repository.save(pushEvent)
         repository.save(event);
     }
 }
