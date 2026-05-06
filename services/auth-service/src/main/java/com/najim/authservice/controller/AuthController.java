@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -19,7 +18,7 @@ public class AuthController {
 
     @GetMapping("/success")
     public ResponseEntity<String> successLogin(OAuth2AuthenticationToken token){
-        authService.handleLogin(token);
+        authService.HandleLogin(token);
         return ResponseEntity.ok("logged in");
     }
 

@@ -5,7 +5,6 @@ spring:
     mongodb:
       uri:  mongodb://najim:najim@localhost:27017/webhook_db?authSource=admin
 
-
 eureka:
   instance:
     hostname: localhost
@@ -14,3 +13,5 @@ eureka:
     fetch-registry: true
     service-url:
       default-zone: http://${eureka.instance.hostname}:8761/eureka
+
+

@@ -1,5 +1,6 @@
 server:
   port: 8080
+
 eureka:
   instance:
     hostname: localhost
@@ -7,7 +8,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      default-zone: http://${eureka.instance.hostname}:8761/eureka
+      default-zone: http://localhost:8761/eureka
 
 spring:
   security:
@@ -19,9 +20,10 @@ spring:
             client-secret: f45edbc188ee561f73f0b886625e0f8a427448a4
             scope: read:user,repo,admin:repo_hook
   datasource:
-    url: jdbc:postgresql://localhost:5432/auth_db
+    url: jdbc:postgresql://localhost:5433/auth_db
     username: najim
     password: najim
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
