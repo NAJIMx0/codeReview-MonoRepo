@@ -19,7 +19,7 @@ public class AuthController {
     @GetMapping("/success")
     public ResponseEntity<String> successLogin(OAuth2AuthenticationToken token){
         authService.HandleLogin(token);
-        return ResponseEntity.ok("logged in");
+        return ResponseEntity.ok("logged in bro ");
     }
 
     @GetMapping("/me")
