@@ -3,43 +3,72 @@ package com.najim.authservice.service;
 import com.najim.authservice.model.GithubUser;
 import com.najim.authservice.repository.GithubUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+
 @Service
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-public class AuthService {
+public class AuthService{
 
-    private final GithubUserRepository githubUserRepository;
+private final GithubUserRepository githubUserRepository;
+    private final OAuth2AuthorizedClientService authorizedClientService;
 
     public GithubUser HandleLogin(OAuth2AuthenticationToken token) {
-        Map<String,Object> attributes = token.getPrincipal().getAttributes();
+        //  access token
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                token.getAuthorizedClientRegistrationId(),
+                token.getName()
+        );
+        String accessToken = client.getAccessToken().getTokenValue();
 
+        Map<String, Object> attributes = token.getPrincipal().getAttributes();
         String githubId = String.valueOf(attributes.get("id"));
         String username = (String) attributes.get("login");
-        String email = attributes.get("email")!=null ?attributes.get("email").toString():"private";// check email
+        String email = attributes.get("email") != null ? attributes.get("email").toString() : "private";
         String avatarUrl = (String) attributes.get("avatar_url");
 
         Optional<GithubUser> userExist = githubUserRepository.findByGithubId(githubId);
 
-        if(userExist.isPresent()){
-            return userExist.get();
-        }else{
+        if (userExist.isPresent()) {
+            GithubUser existing = userExist.get();
+            existing.setAccessToken(accessToken);
+            return githubUserRepository.save(existing);
+        } else {
             GithubUser userCr = GithubUser.builder()
                     .githubId(githubId)
                     .username(username)
+                    .accessToken(accessToken)
                     .email(email)
                     .avatarUrl(avatarUrl)
                     .createdAt(LocalDateTime.now())
                     .build();
-            githubUserRepository.save(userCr);
-            return userCr;
+            return githubUserRepository.save(userCr);
         }
+    }
 
+    public List<Map<String,Object>> getGithuhRepo(OAuth2AuthenticationToken token) {
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                token.getAuthorizedClientRegistrationId(),
+                token.getName()
+        );
+        String accessToken = client.getAccessToken().getTokenValue();
+
+        RestClient restClient = RestClient.create();
+        return restClient.get()
+                .uri("https://api.github.com/user/repos")
+                .header("Authorization", "Bearer " + accessToken)
+                .retrieve()
+                .body(List.class);
     }
 }

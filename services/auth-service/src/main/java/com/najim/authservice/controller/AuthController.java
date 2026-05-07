@@ -17,13 +17,17 @@ public class AuthController {
     private final AuthService authService;
 
     @GetMapping("/success")
-    public ResponseEntity<String> successLogin(OAuth2AuthenticationToken token){
+    public ResponseEntity<?> successLogin(OAuth2AuthenticationToken token){
         authService.HandleLogin(token);
         return ResponseEntity.ok("logged in bro ");
     }
+    @GetMapping("/repo")
+    public ResponseEntity<?> getRepo(OAuth2AuthenticationToken token){
+        return ResponseEntity.ok(authService.getGithuhRepo(token));
+    }
 
     @GetMapping("/me")
-    public ResponseEntity<String> userInfo(OAuth2AuthenticationToken token){
+    public ResponseEntity<?> userInfo(OAuth2AuthenticationToken token){
         Map<String,Object> userdata  =token.getPrincipal().getAttributes();
         String username = (String) userdata.get("login");
         return ResponseEntity.ok(username);
