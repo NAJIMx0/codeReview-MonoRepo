@@ -1,5 +1,6 @@
 package com.najim.authservice.service;
 
+import com.najim.authservice.model.ConnectedRepo;
 import com.najim.authservice.model.GithubUser;
 import com.najim.authservice.repository.ConnectedRepoRepository;
 import com.najim.authservice.repository.GithubUserRepository;
@@ -104,27 +105,25 @@ private final GithubUserRepository githubUserRepository;
                     .body(Map.class);
 
         }catch (Exception e){
-            return Map.of("status", "already connected", "repo", repoName);
+            System.out.println(e.getMessage()+"allredy exist");
         }
+        if (!connectedRepoRepository.existsByGithubIdAndRepoName(githubId, repoName)) {
+            connectedRepoRepository.save(ConnectedRepo.builder()
+                    .githubId(githubId)
+                    .repoName(repoName)
+                    .owner(owner)
+                    .build());
+        }
+        return Map.of("status", "connected", "repo", repoName);
 
     }
 
     public List<String> getConnectedRepos(OAuth2AuthenticationToken token) {
-        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
-                token.getAuthorizedClientRegistrationId(),
-                token.getName()
-        );
-        String accessToken = client.getAccessToken().getTokenValue();
-
-        RestClient restClient = RestClient.create();
-        List<Map<String, Object>> hooks = restClient.get()
-                .uri("https://api.github.com/user/installations")
-                .header("Authorization", "Bearer " + accessToken)
-                .retrieve()
-                .body(List.class);
-
-        // simpler - get connected repos from GitHub hooks per repo
-        // For now return from our DB - we need a ConnectedRepo entity
-        return List.of(hooks);
+        Map<String, Object> attributes = token.getPrincipal().getAttributes();
+        String githubId = String.valueOf(attributes.get("id"));
+        return connectedRepoRepository.findByGithubId(githubId)
+                .stream()
+                .map(ConnectedRepo::getRepoName)
+                .toList();
     }
 }
