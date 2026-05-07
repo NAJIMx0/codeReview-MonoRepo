@@ -72,7 +72,7 @@ private final GithubUserRepository githubUserRepository;
                 .uri("https://api.github.com/user/repos")
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
-                .body(List.class);
+                .body(List.class);// list of mapat
     }
 
     public  Map<String, Object> connectRepo(String owner, String repoName, OAuth2AuthenticationToken token) {

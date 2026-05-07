@@ -60,9 +60,9 @@ public class WebhookService {
         // Guard: only handle push events with commits
         List<Map<String, Object>> commits = (List<Map<String, Object>>) payload.get("commits");
         if (commits == null || commits.isEmpty()) {
-            return; // ping event or empty push — skip
+            return; // ping event or empty push — skip it  brovv
         }
-            //just mosiba o sf again
+            //just mosiba o sf again alah lmostaan my borthee
         // 1. Extract repoName
         Map<String, Object> repo = (Map<String, Object>) payload.get("repository");
         String repoName = (String) repo.get("full_name");
@@ -92,7 +92,7 @@ public class WebhookService {
                 .changedFiles(files)
                 .receivedAt(LocalDateTime.now())
                 .build();
-        System.out.println("ABOUT TO SAVE - repo: " + repoName + " sha: " + commitSha);
+        System.out.println("about to save - repo: " + repoName + " sha: " + commitSha);
         repository.save(event);
 
 
