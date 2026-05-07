@@ -4,9 +4,7 @@ import com.najim.authservice.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -16,7 +14,7 @@ import java.util.Map;
 public class AuthController {
     private final AuthService authService;
 
-    @GetMapping("/success")
+    @GetMapping()
     public ResponseEntity<?> successLogin(OAuth2AuthenticationToken token){
         authService.HandleLogin(token);
         return ResponseEntity.ok("logged in bro ");
@@ -24,6 +22,14 @@ public class AuthController {
     @GetMapping("/repo")
     public ResponseEntity<?> getRepo(OAuth2AuthenticationToken token){
         return ResponseEntity.ok(authService.getGithuhRepo(token));
+    }
+
+    @PostMapping("/connect/{owner}/{repoName}")
+    public ResponseEntity<?> connectRepo(
+            @PathVariable String owner,
+            @PathVariable String repoName,
+            OAuth2AuthenticationToken token) {
+        return ResponseEntity.ok(authService.connectRepo(owner, repoName, token));
     }
 
     @GetMapping("/me")

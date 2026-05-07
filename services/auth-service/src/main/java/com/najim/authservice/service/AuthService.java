@@ -71,4 +71,33 @@ private final GithubUserRepository githubUserRepository;
                 .retrieve()
                 .body(List.class);
     }
+
+    public  Object connectRepo(String owner, String repoName, OAuth2AuthenticationToken token) {
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                token.getAuthorizedClientRegistrationId(),
+                token.getName()
+        );
+        String accessToken = client.getAccessToken().getTokenValue();
+        Map<String, Object> config = Map.of(
+                "url", "https://bronco-revival-marathon.ngrok-free.dev/api/webhook/github",
+                "content_type", "json"
+        );
+
+        Map<String, Object> body = Map.of(
+                "config", config,
+                "events", List.of("push"),
+                "active", true
+        );
+
+        RestClient restClient = RestClient.create();
+        return restClient.post()
+                .uri("https://api.github.com/repos/" + owner + "/" + repoName + "/hooks")
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .body(body)
+                .retrieve()
+                .body(Map.class);
+
+
+    }
 }

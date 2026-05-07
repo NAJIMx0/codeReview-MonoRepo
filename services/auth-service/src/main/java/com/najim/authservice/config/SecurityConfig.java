@@ -18,7 +18,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth->oauth
-                        .defaultSuccessUrl("/api/auth/success",true)
+                        .defaultSuccessUrl("http://localhost:5173/dashboard",true)
                 );
         return http.build();
     }
