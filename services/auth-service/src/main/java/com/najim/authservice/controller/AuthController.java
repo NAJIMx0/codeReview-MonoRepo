@@ -31,7 +31,10 @@ public class AuthController {
             OAuth2AuthenticationToken token) {
         return ResponseEntity.ok(authService.connectRepo(owner, repoName, token));
     }
-
+    @GetMapping("/connected-repos")
+    public ResponseEntity<?> getConnectedRepos(OAuth2AuthenticationToken token) {
+        return ResponseEntity.ok(authService.getConnectedRepos(token));
+    }
     @GetMapping("/me")
     public ResponseEntity<?> userInfo(OAuth2AuthenticationToken token){
         Map<String,Object> userdata  =token.getPrincipal().getAttributes();

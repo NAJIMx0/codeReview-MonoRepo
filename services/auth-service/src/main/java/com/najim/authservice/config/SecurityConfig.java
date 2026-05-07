@@ -19,6 +19,14 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth->oauth
                         .defaultSuccessUrl("http://localhost:5173/dashboard",true)
+                ).logout(logout -> logout
+                        .logoutUrl("/api/auth/logout")
+                        .deleteCookies("JSESSIONID")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)  
+                        .logoutSuccessHandler((req, res, auth) -> {
+                            res.setStatus(200);
+                        })
                 );
         return http.build();
     }

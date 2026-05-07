@@ -1,6 +1,7 @@
 package com.najim.authservice.service;
 
 import com.najim.authservice.model.GithubUser;
+import com.najim.authservice.repository.ConnectedRepoRepository;
 import com.najim.authservice.repository.GithubUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -23,6 +24,7 @@ public class AuthService{
 
 private final GithubUserRepository githubUserRepository;
     private final OAuth2AuthorizedClientService authorizedClientService;
+    private final ConnectedRepoRepository connectedRepoRepository;
 
     public GithubUser HandleLogin(OAuth2AuthenticationToken token) {
         //  access token
@@ -72,32 +74,57 @@ private final GithubUserRepository githubUserRepository;
                 .body(List.class);
     }
 
-    public  Object connectRepo(String owner, String repoName, OAuth2AuthenticationToken token) {
+    public  Map<String, Object> connectRepo(String owner, String repoName, OAuth2AuthenticationToken token) {
+        Map<String, Object> attributes = token.getPrincipal().getAttributes();
+        String githubId = String.valueOf(attributes.get("id"));
+        try {
+            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                    token.getAuthorizedClientRegistrationId(),
+                    token.getName()
+            );
+            String accessToken = client.getAccessToken().getTokenValue();
+
+            Map<String, Object> config = Map.of(
+                    "url", "https://bronco-revival-marathon.ngrok-free.dev/api/webhook/github",
+                    "content_type", "json"
+            );
+            Map<String, Object> body = Map.of(
+                    "config", config,
+                    "events", List.of("push"),
+                    "active", true
+            );
+
+            RestClient restClient = RestClient.create();
+            return restClient.post()
+                    .uri("https://api.github.com/repos/" + owner + "/" + repoName + "/hooks")
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Content-Type", "application/json")
+                    .body(body)
+                    .retrieve()
+                    .body(Map.class);
+
+        }catch (Exception e){
+            return Map.of("status", "already connected", "repo", repoName);
+        }
+
+    }
+
+    public List<String> getConnectedRepos(OAuth2AuthenticationToken token) {
         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
                 token.getAuthorizedClientRegistrationId(),
                 token.getName()
         );
         String accessToken = client.getAccessToken().getTokenValue();
-        Map<String, Object> config = Map.of(
-                "url", "https://bronco-revival-marathon.ngrok-free.dev/api/webhook/github",
-                "content_type", "json"
-        );
-
-        Map<String, Object> body = Map.of(
-                "config", config,
-                "events", List.of("push"),
-                "active", true
-        );
 
         RestClient restClient = RestClient.create();
-        return restClient.post()
-                .uri("https://api.github.com/repos/" + owner + "/" + repoName + "/hooks")
+        List<Map<String, Object>> hooks = restClient.get()
+                .uri("https://api.github.com/user/installations")
                 .header("Authorization", "Bearer " + accessToken)
-                .header("Content-Type", "application/json")
-                .body(body)
                 .retrieve()
-                .body(Map.class);
+                .body(List.class);
 
-
+        // simpler - get connected repos from GitHub hooks per repo
+        // For now return from our DB - we need a ConnectedRepo entity
+        return List.of(hooks);
     }
 }
