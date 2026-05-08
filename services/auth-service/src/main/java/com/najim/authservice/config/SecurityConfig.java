@@ -1,6 +1,7 @@
 package com.najim.authservice.config;
 
 import com.najim.authservice.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,7 +53,6 @@ public class SecurityConfig {
                         .logoutUrl("/api/auth/logout")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID")
                         .addLogoutHandler((request, response, authentication) -> {
                             if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
                                 authorizedClientService.removeAuthorizedClient(
@@ -60,18 +60,17 @@ public class SecurityConfig {
                                         oauthToken.getName()
                                 );
                             }
-                        })
-                        .logoutSuccessHandler((req, res, auth) -> {
                             jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JSESSIONID", null);
                             cookie.setMaxAge(0);
                             cookie.setPath("/");
-                            cookie.setDomain("localhost");
                             cookie.setHttpOnly(true);
-                            res.addCookie(cookie);
-
-                            res.sendRedirect("http://localhost:5173");
+                            response.addCookie(cookie);
+                        })
+                        .logoutSuccessHandler((req, res, auth) -> {
+                            res.setStatus(HttpServletResponse.SC_OK); // ✅ no redirect, just 200
                         })
                 );
+
         return http.build();
     }
 

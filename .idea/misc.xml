@@ -8,6 +8,8 @@
         <option value="$PROJECT_DIR$/services/discovery/pom.xml" />
         <option value="$PROJECT_DIR$/services/webhook-service/pom.xml" />
         <option value="$PROJECT_DIR$/services/auth-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/auth-service/generate-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/generate-service/pom.xml" />
       </list>
     </option>
   </component>

@@ -51,5 +51,9 @@ public class AuthController {
         }
         return ResponseEntity.ok().build();
     }
+    @GetMapping("/token/{username}")
+    public ResponseEntity<String> getTokenByUsername(@PathVariable String username) {
+        return ResponseEntity.ok(authService.getTokenByUsername(username));
+    }
 
 }

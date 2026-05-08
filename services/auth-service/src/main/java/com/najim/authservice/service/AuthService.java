@@ -133,6 +133,11 @@ private final GithubUserRepository githubUserRepository;
                 .toList();
     }
 
+    public  String getTokenByUsername(String username) {
+        return githubUserRepository.findByUsername(username)
+                .stream().map(GithubUser::getAccessToken).findAny().orElseThrow(()->new RuntimeException("user not foundt /token"));
+    }
+
     public void revokeGithubToken(OAuth2AuthenticationToken token) {
         try {
             OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
@@ -162,4 +167,6 @@ private final GithubUserRepository githubUserRepository;
             System.out.println("Token revocation failed (non-critical): " + e.getMessage());
         }
     }
+
+
 }
