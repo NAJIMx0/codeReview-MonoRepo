@@ -13,40 +13,48 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
+
+
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final OAuth2AuthorizedClientService authorizedClientService;
-    public final ClientRegistrationRepository clientRegistrationRepository;
-    public final AuthService authService;
+    private final ClientRegistrationRepository clientRegistrationRepository;
+
     @Bean
     public SecurityFilterChain FilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequest->authorizeRequest
-                        .requestMatchers("/api/auth/logout").permitAll()
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/logout", "/api/auth/revoke").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .anyRequest().authenticated()
-                ).exceptionHandling(ex -> ex
+                )
+                .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(401);
                             response.getWriter().write("Unauthorized");
                         })
                 )
-                .oauth2Login(oauth->oauth
-                        .defaultSuccessUrl("/api/auth/success",true)
+                .oauth2Login(oauth -> oauth
+                        .defaultSuccessUrl("/api/auth/success", true)
                         .authorizationEndpoint(endpoint -> endpoint
                                 .authorizationRequestResolver(authorizationRequestResolver())
                         )
-                ).logout(logout -> logout
+                )
+                .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
-                        .deleteCookies("JSESSIONID")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
                         .addLogoutHandler((request, response, authentication) -> {
                             if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
-                                authService.revokeGithubToken(oauthToken);  // ← revoke first
                                 authorizedClientService.removeAuthorizedClient(
                                         oauthToken.getAuthorizedClientRegistrationId(),
                                         oauthToken.getName()
@@ -54,10 +62,10 @@ public class SecurityConfig {
                             }
                         })
                         .logoutSuccessHandler((req, res, auth) -> {
-                            // Delete the cookie server-side — this actually works
                             jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JSESSIONID", null);
                             cookie.setMaxAge(0);
                             cookie.setPath("/");
+                            cookie.setDomain("localhost");
                             cookie.setHttpOnly(true);
                             res.addCookie(cookie);
 
@@ -74,19 +82,22 @@ public class SecurityConfig {
                         clientRegistrationRepository,
                         "/oauth2/authorization"
                 );
-
-        // Force GitHub to always show the login screen
         resolver.setAuthorizationRequestCustomizer(customizer ->
-                customizer.additionalParameters(params ->
-                        {
-                            params.put("allow_signup", "false");
-                            params.remove("prompt");
-                        }
-                )
-
+                customizer.additionalParameters(params -> params.put("allow_signup", "false"))
         );
-
         return resolver;
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("GET", "POST", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true); // ← required for cookies
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 }

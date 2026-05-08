@@ -44,5 +44,12 @@ public class AuthController {
         String username = (String) userdata.get("login");
         return ResponseEntity.ok(username);
     }
+    @PostMapping("/revoke")
+    public ResponseEntity<?> revokeToken(OAuth2AuthenticationToken token) {
+        if (token != null) {
+            authService.revokeGithubToken(token);
+        }
+        return ResponseEntity.ok().build();
+    }
 
 }

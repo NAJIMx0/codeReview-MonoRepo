@@ -134,26 +134,32 @@ private final GithubUserRepository githubUserRepository;
     }
 
     public void revokeGithubToken(OAuth2AuthenticationToken token) {
-        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
-                token.getAuthorizedClientRegistrationId(),
-                token.getName()
-        );
-        if (client == null) return;
+        try {
+            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                    token.getAuthorizedClientRegistrationId(),
+                    token.getName()
+            );
+            if (client == null) return;
 
-        String accessToken = client.getAccessToken().getTokenValue();
-        String credentials = Base64.getEncoder().encodeToString(
-                "Ov23li6ROKOgMYOPi707:f45edbc188ee561f73f0b886625e0f8a427448a4".getBytes()
-        );
+            String accessToken = client.getAccessToken().getTokenValue();
+            String credentials = Base64.getEncoder().encodeToString(
+                    "Ov23li6ROKOgMYOPi707:f45edbc188ee561f73f0b886625e0f8a427448a4".getBytes()
+            );
 
-        RestClient.create()
-                .method(HttpMethod.DELETE)  // ← use method() not .delete()
-                .uri("https://api.github.com/applications/{client_id}/token",
-                        "Ov23li6ROKOgMYOPi707")
-                .header("Authorization", "Basic " + credentials)
-                .header("Accept", "application/vnd.github+json")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("access_token", accessToken))
-                .retrieve()
-                .toBodilessEntity();
+            RestClient.create()
+                    .method(HttpMethod.DELETE)
+                    .uri("https://api.github.com/applications/{client_id}/token",
+                            "Ov23li6ROKOgMYOPi707")
+                    .header("Authorization", "Basic " + credentials)
+                    .header("Accept", "application/vnd.github+json")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("access_token", accessToken))
+                    .retrieve()
+                    .toBodilessEntity();
+
+        } catch (Exception e) {
+            // Never block logout even if revocation fails
+            System.out.println("Token revocation failed (non-critical): " + e.getMessage());
+        }
     }
 }

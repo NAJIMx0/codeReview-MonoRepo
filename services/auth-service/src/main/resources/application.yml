@@ -18,3 +18,5 @@ server:
       cookie:
         same-site: lax
         http-only: true
+        domain: localhost  # ← add this so Spring sets it explicitly
+      persistent: false    # ← add this, session dies on browser close too
