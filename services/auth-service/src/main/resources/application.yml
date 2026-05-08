@@ -12,3 +12,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        http-only: true

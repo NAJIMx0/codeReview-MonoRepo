@@ -1,11 +1,13 @@
 package com.najim.authservice.controller;
 
 import com.najim.authservice.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -14,10 +16,11 @@ import java.util.Map;
 public class AuthController {
     private final AuthService authService;
 
-    @GetMapping()
-    public ResponseEntity<?> successLogin(OAuth2AuthenticationToken token){
+    @GetMapping("/success")
+    public void successLogin(OAuth2AuthenticationToken token,
+                                            HttpServletResponse response) throws IOException {
         authService.HandleLogin(token);
-        return ResponseEntity.ok("logged in bro ");
+        response.sendRedirect("http://localhost:5173/dashboard");
     }
     @GetMapping("/repo")
     public ResponseEntity<?> getRepo(OAuth2AuthenticationToken token){

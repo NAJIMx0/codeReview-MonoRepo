@@ -1,5 +1,6 @@
 package com.najim.authservice.config;
 
+import com.najim.authservice.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,17 +20,24 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     private final OAuth2AuthorizedClientService authorizedClientService;
     public final ClientRegistrationRepository clientRegistrationRepository;
+    public final AuthService authService;
     @Bean
     public SecurityFilterChain FilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequest->authorizeRequest
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/logout").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .anyRequest().authenticated()
+                ).exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(401);
+                            response.getWriter().write("Unauthorized");
+                        })
                 )
                 .oauth2Login(oauth->oauth
-                        .defaultSuccessUrl("http://localhost:5173/dashboard",true)
+                        .defaultSuccessUrl("/api/auth/success",true)
                         .authorizationEndpoint(endpoint -> endpoint
-                                .authorizationRequestResolver(authorizationRequestResolver()) // ← add this
+                                .authorizationRequestResolver(authorizationRequestResolver())
                         )
                 ).logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
@@ -38,6 +46,7 @@ public class SecurityConfig {
                         .clearAuthentication(true)
                         .addLogoutHandler((request, response, authentication) -> {
                             if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+                                authService.revokeGithubToken(oauthToken);  // ← revoke first
                                 authorizedClientService.removeAuthorizedClient(
                                         oauthToken.getAuthorizedClientRegistrationId(),
                                         oauthToken.getName()
@@ -45,7 +54,13 @@ public class SecurityConfig {
                             }
                         })
                         .logoutSuccessHandler((req, res, auth) -> {
-                            res.setHeader("Location", "http://localhost:5173");
+                            // Delete the cookie server-side — this actually works
+                            jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JSESSIONID", null);
+                            cookie.setMaxAge(0);
+                            cookie.setPath("/");
+                            cookie.setHttpOnly(true);
+                            res.addCookie(cookie);
+
                             res.sendRedirect("http://localhost:5173");
                         })
                 );
@@ -62,7 +77,13 @@ public class SecurityConfig {
 
         // Force GitHub to always show the login screen
         resolver.setAuthorizationRequestCustomizer(customizer ->
-                customizer.additionalParameters(params -> params.put("prompt", "login"))
+                customizer.additionalParameters(params ->
+                        {
+                            params.put("allow_signup", "false");
+                            params.remove("prompt");
+                        }
+                )
+
         );
 
         return resolver;

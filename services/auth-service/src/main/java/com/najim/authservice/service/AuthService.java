@@ -6,7 +6,9 @@ import com.najim.authservice.repository.ConnectedRepoRepository;
 import com.najim.authservice.repository.GithubUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -78,7 +81,7 @@ private final GithubUserRepository githubUserRepository;
     public  Map<String, Object> connectRepo(String owner, String repoName, OAuth2AuthenticationToken token) {
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
         String githubId = String.valueOf(attributes.get("id"));
-        
+
         try {
             OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
                     token.getAuthorizedClientRegistrationId(),
@@ -128,5 +131,29 @@ private final GithubUserRepository githubUserRepository;
                 .stream()
                 .map(ConnectedRepo::getRepoName)
                 .toList();
+    }
+
+    public void revokeGithubToken(OAuth2AuthenticationToken token) {
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                token.getAuthorizedClientRegistrationId(),
+                token.getName()
+        );
+        if (client == null) return;
+
+        String accessToken = client.getAccessToken().getTokenValue();
+        String credentials = Base64.getEncoder().encodeToString(
+                "Ov23li6ROKOgMYOPi707:f45edbc188ee561f73f0b886625e0f8a427448a4".getBytes()
+        );
+
+        RestClient.create()
+                .method(HttpMethod.DELETE)  // ← use method() not .delete()
+                .uri("https://api.github.com/applications/{client_id}/token",
+                        "Ov23li6ROKOgMYOPi707")
+                .header("Authorization", "Basic " + credentials)
+                .header("Accept", "application/vnd.github+json")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("access_token", accessToken))
+                .retrieve()
+                .toBodilessEntity();
     }
 }
