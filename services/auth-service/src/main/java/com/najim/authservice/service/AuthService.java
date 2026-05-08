@@ -78,6 +78,7 @@ private final GithubUserRepository githubUserRepository;
     public  Map<String, Object> connectRepo(String owner, String repoName, OAuth2AuthenticationToken token) {
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
         String githubId = String.valueOf(attributes.get("id"));
+        
         try {
             OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
                     token.getAuthorizedClientRegistrationId(),
@@ -107,6 +108,7 @@ private final GithubUserRepository githubUserRepository;
         }catch (Exception e){
             System.out.println(e.getMessage()+"allredy exist");
         }
+
         if (!connectedRepoRepository.existsByGithubIdAndRepoName(githubId, repoName)) {
             connectedRepoRepository.save(ConnectedRepo.builder()
                     .githubId(githubId)
@@ -114,6 +116,7 @@ private final GithubUserRepository githubUserRepository;
                     .owner(owner)
                     .build());
         }
+
         return Map.of("status", "connected", "repo", repoName);
 
     }
