@@ -19,17 +19,14 @@ public class WebhookController {
             @RequestBody Map<String, Object> payload
     ) {
         if (!event.equals("push")) {
-            return ResponseEntity.ok("ignored"); // ping and other events
+            return ResponseEntity.ok("ignored"); // ping or other events
         }
-
         try {
-            System.out.println("CONTROLLER HIT - event: " + event);
-
             webhookService.process(payload);
             return ResponseEntity.ok("received");
         } catch (Exception e) {
-            e.printStackTrace(); // check your console
             return ResponseEntity.status(500).body("error: " + e.getMessage());
         }
     }
+
 }

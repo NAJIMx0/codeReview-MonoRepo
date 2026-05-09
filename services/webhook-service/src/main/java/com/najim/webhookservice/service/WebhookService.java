@@ -57,25 +57,22 @@ public class WebhookService {
 
         System.out.println("SERVICE CALLED - files: " + payload.get("commits"));
 
-        // Guard: only handle push events with commits
+
         List<Map<String, Object>> commits = (List<Map<String, Object>>) payload.get("commits");
         if (commits == null || commits.isEmpty()) {
             return; // ping event or empty push — skip it  brovv
         }
             //just mosiba o sf again alah lmostaan my borthee
-        // 1. Extract repoName
+
         Map<String, Object> repo = (Map<String, Object>) payload.get("repository");
         String repoName = (String) repo.get("full_name");
 
-        // 2. Extract commitSha safely
         Map<String, Object> headCommit = (Map<String, Object>) payload.get("head_commit");
         String commitSha = headCommit != null ? (String) headCommit.get("id") : "unknown";
 
-        // 3. Extract pusher name
         Map<String, Object> pusher = (Map<String, Object>) payload.get("pusher");
         String pusherName = pusher != null ? (String) pusher.get("name") : "unknown";
 
-        // 4. Collect changed files
         List<String> files = new ArrayList<>();
         for (Map<String, Object> commit : commits) {
             List<String> modified = (List<String>) commit.get("modified");
@@ -84,7 +81,6 @@ public class WebhookService {
             if (added != null) files.addAll(added);
         }
 
-        // 5. Build and save
         PushEvent event = PushEvent.builder()
                 .repoName(repoName)
                 .commitSha(commitSha)
