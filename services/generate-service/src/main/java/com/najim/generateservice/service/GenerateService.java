@@ -31,24 +31,28 @@ public class GenerateService {
         List<FileReviewRequest> ListfileReviewRequests = new ArrayList<>();
 
         for(String filepath : changedFiles) {
-            Map<String, Object> response = RestClient.create()
-                    .get()
-                    .uri("https://api.github.com/repos/{repoName}/contents/{filePath}", repoName, filepath)
-                    .header("Authorization", "Bearer " + accessToken)
-                    .retrieve()
-                    .body(Map.class);
-            String encoded = (String) response.get("content");
-            byte[] decoded = Base64.getDecoder().decode(encoded.replaceAll("\\n", ""));
-            String contentCode = new String(decoded);
-            ListfileReviewRequests.add(new FileReviewRequest(filepath , contentCode));
+
+            if (filepath.startsWith(".idea") || filepath.startsWith(".git")) {
+                continue;
+            }
+            System.out.println("trying: https://api.github.com/repos/" + repoName + "/contents/" + filepath);
+            try {
+                Map<String, Object> response = RestClient.create()
+                        .get()
+                        .uri("https://api.github.com/repos/{repoName}/contents/{filePath}", repoName, filepath)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .retrieve()
+                        .body(Map.class);
+                String encoded = (String) response.get("content");
+                byte[] decoded = Base64.getDecoder().decode(encoded.replaceAll("\\n", ""));
+                String contentCode = new String(decoded);
+                ListfileReviewRequests.add(new FileReviewRequest(filepath, contentCode));
+            } catch (Exception e) {
+                System.out.println("skipping file: " + filepath + " reason: " + e.getMessage());
+            }
         }
-
+        System.out.println(ListfileReviewRequests);
         return ListfileReviewRequests;
-
-
-
-
-
 
     }
 }

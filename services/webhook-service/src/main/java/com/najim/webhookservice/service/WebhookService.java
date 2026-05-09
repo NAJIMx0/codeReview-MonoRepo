@@ -99,7 +99,7 @@ public class WebhookService {
 
         restClientbuilder.build()
                 .post()
-                .uri("http://generate-service/api/generate/caller")
+                .uri("http://localhost:8998/api/generate/caller")
                 .body(Map.of(
                         "username", pusherName,
                         "accessToken", accessToken,
@@ -117,7 +117,7 @@ public class WebhookService {
 
         return restClientbuilder.build()
                 .get()
-                .uri("http://auth-service/api/auth/token/{username}", username)
+                .uri("http://localhost:8080/api/auth/token/{username}", username)
                 .retrieve()
                 .body(String.class);
     }
