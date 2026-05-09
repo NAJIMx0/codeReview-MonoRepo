@@ -132,10 +132,11 @@ private final GithubUserRepository githubUserRepository;
                 .map(ConnectedRepo::getRepoName)
                 .toList();
     }
-        // ara acces token
+        // ara access token
     public  String getTokenByUsername(String username) {
         return githubUserRepository.findByUsername(username)
-                .stream().map(GithubUser::getAccessToken).findAny().orElseThrow(()->new RuntimeException("user not foundt /token"));
+                .stream().map(GithubUser::getAccessToken).findAny()
+                .orElseThrow(()->new RuntimeException("user not foundt /token"));
     }
 
     public void revokeGithubToken(OAuth2AuthenticationToken token) {

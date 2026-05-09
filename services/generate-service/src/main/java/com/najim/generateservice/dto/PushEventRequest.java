@@ -3,8 +3,9 @@ package com.najim.generateservice.dto;
 import java.util.List;
 
 public record PushEventRequest(
+        String username,
+        String accessToken,
         String repoName,
-        String commitSha,
-        String pusherName,
-        List<String> changedFiles
+        List<String> changedFiles,
+        String commitSha
 ) {}

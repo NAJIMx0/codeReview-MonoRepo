@@ -1,11 +1,15 @@
 package com.najim.webhookservice.service;
 
 
+import com.najim.webhookservice.config.RestClientConfig;
+import com.najim.webhookservice.dto.pusherYYPayload;
 import com.najim.webhookservice.model.PushEvent;
 import com.najim.webhookservice.repository.PushEventRepository;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,7 +22,7 @@ import java.util.Map;
 public class WebhookService {
 
     private final PushEventRepository repository;
-
+    private final RestClient.Builder  restClientbuilder;
 
 
 //    {
@@ -62,8 +66,8 @@ public class WebhookService {
         if (commits == null || commits.isEmpty()) {
             return; // ping event or empty push — skip it  brovv
         }
-            //just mosiba o sf again alah lmostaan my borthee
 
+        //just mosiba o sf again alah lmostaan my borthee --naah just fetch easy alah with us
         Map<String, Object> repo = (Map<String, Object>) payload.get("repository");
         String repoName = (String) repo.get("full_name");
 
@@ -88,10 +92,35 @@ public class WebhookService {
                 .changedFiles(files)
                 .receivedAt(LocalDateTime.now())
                 .build();
-        System.out.println("about to save - repo: " + repoName + " sha: " + commitSha);
+
         repository.save(event);
+
+        String accessToken = ProvideAccessT(pusherName);
+
+        restClientbuilder.build()
+                .post()
+                .uri("http://generate-service/api/generate/caller")
+                .body(Map.of(
+                        "username", pusherName,
+                        "accessToken", accessToken,
+                        "repoName", repoName,
+                        "changedFiles", files,
+                        "commitSha", commitSha
+                ))
+                .retrieve()
+                .toBodilessEntity();
 
 
     }
+
+    public String ProvideAccessT(String username) {
+
+        return restClientbuilder.build()
+                .get()
+                .uri("http://auth-service/api/auth/token/{username}", username)
+                .retrieve()
+                .body(String.class);
+    }
+
 }
 
