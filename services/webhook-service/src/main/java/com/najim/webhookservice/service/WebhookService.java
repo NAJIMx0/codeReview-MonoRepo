@@ -96,6 +96,7 @@ public class WebhookService {
         repository.save(event);
 
         String accessToken = ProvideAccessT(pusherName);
+        System.out.println("accessToken: " + accessToken);
 
         restClientbuilder.build()
                 .post()

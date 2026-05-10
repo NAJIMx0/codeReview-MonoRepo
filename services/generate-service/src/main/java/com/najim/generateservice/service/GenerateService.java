@@ -2,6 +2,7 @@ package com.najim.generateservice.service;
 
 import com.najim.generateservice.dto.FileReviewRequest;
 import com.najim.generateservice.dto.PushEventRequest;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -24,12 +25,12 @@ public class GenerateService {
     public List<FileReviewRequest> HandelPayload(PushEventRequest payload) {
         List<String> changedFiles = payload.changedFiles();
         String repoName = payload.repoName();
-        String username = payload.username();
+//        String username = payload.username();
         String accessToken = payload.accessToken();
-        String commitSha = payload.commitSha();
+//        String commitSha = payload.commitSha();
 
         List<FileReviewRequest> ListfileReviewRequests = new ArrayList<>();
-
+        System.out.println("token received: " + accessToken);
         for(String filepath : changedFiles) {
 
             if (filepath.startsWith(".idea") || filepath.startsWith(".git")) {
@@ -39,7 +40,7 @@ public class GenerateService {
             try {
                 Map<String, Object> response = RestClient.create()
                         .get()
-                        .uri("https://api.github.com/repos/{repoName}/contents/{filePath}", repoName, filepath)
+                        .uri("https://api.github.com/repos/" + repoName + "/contents/" + filepath)
                         .header("Authorization", "Bearer " + accessToken)
                         .retrieve()
                         .body(Map.class);
@@ -52,7 +53,38 @@ public class GenerateService {
             }
         }
         System.out.println(ListfileReviewRequests);
+//        sendToFastApi(ListfileReviewRequests);
         return ListfileReviewRequests;
 
     }
+
+    private void sendToFastApi(List<FileReviewRequest> files) {
+        try {
+            RestClient.create()
+                    .post()
+                    .uri("http://localhost:8181/api/fastapi/input")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .body(files)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            System.out.println("FastAPI call failed: " + e.getMessage());
+        }
+    }
+
+    public  void SendToFront(Object fastApiResponse) {
+        try {
+            RestClient.create()
+                    .post()
+                    .uri("http://localhost:5173/review")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .body(fastApiResponse)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            System.out.println("FrontEnd call failed: " + e.getMessage());
+        }
+
+    }
+
 }

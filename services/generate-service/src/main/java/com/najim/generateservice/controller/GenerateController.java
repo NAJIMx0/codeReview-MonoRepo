@@ -11,10 +11,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/generate")
 public class GenerateController {
     public final GenerateService generateService;
-
+    // cathc the payload from webhook-service
     @PostMapping("/caller")
     public ResponseEntity<?> caller(@RequestBody PushEventRequest payload) {
         return ResponseEntity.ok(generateService.HandelPayload(payload));
     }
-
+    // catch the review json from fastapi-service
+    @PostMapping("/holler")
+    public ResponseEntity<?> holler(@RequestBody Object fastApiResponse) {
+        generateService.SendToFront(fastApiResponse);
+        return ResponseEntity.ok("send it");
+    }
 }
