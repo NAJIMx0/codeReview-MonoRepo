@@ -9,7 +9,6 @@
         <outputRelativeToContentRoot value="true" />
         <module name="webhook-service" />
         <module name="config-server" />
-        <module name="discovery" />
       </profile>
       <profile name="Annotation profile for generate-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -22,6 +21,9 @@
         <module name="generate-service" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="discovery" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
