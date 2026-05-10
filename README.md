@@ -10,8 +10,8 @@ Microservices monorepo with the following services:
 - **discovery** (8761) — Eureka Server, service registry
 - **auth-service** (8080) — GitHub OAuth2 login, user management, webhook creation
 - **webhook-service** (8999) — Receives GitHub push events, stores to MongoDB
-- **generate-service** (8998) — ⏳ Fetches changed file content from GitHub API
-- **fastapi-service** (8000) — ⏳ AI code analysis (radon, pycodestyle)
+- **generate-service** (8998) —  Fetches changed file content from GitHub API
+- **fastapi-service** (8181) —  AI code analysis (radon, pycodestyle)
 - **frontend** (5173) — React + Vite + Tailwind, terminal-style UI
 
 ## Tech Stack
