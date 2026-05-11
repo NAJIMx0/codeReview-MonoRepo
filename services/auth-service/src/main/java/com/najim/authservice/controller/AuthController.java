@@ -26,7 +26,7 @@ public class AuthController {
     public ResponseEntity<?> getRepo(OAuth2AuthenticationToken token){
         return ResponseEntity.ok(authService.getGithuhRepo(token));
     }
-
+// end point of connection
     @PostMapping("/connect/{owner}/{repoName}")
     public ResponseEntity<?> connectRepo(
             @PathVariable String owner,
