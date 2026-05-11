@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ import java.util.Map;
 public class WebhookService {
 
     private final PushEventRepository repository;
-    private final RestClient.Builder  restClientbuilder;
+    private final RestTemplate restTemplate;
 
 
 //    {
@@ -98,29 +99,27 @@ public class WebhookService {
         String accessToken = ProvideAccessT(pusherName);
         System.out.println("accessToken: " + accessToken);
 
-        restClientbuilder.build()
-                .post()
-                .uri("http://localhost:8998/api/generate/caller")
-                .body(Map.of(
+        restTemplate.postForEntity(
+                "http://GENERATE-SERVICE/api/generate/caller",
+                Map.of(
                         "username", pusherName,
                         "accessToken", accessToken,
                         "repoName", repoName,
                         "changedFiles", files,
                         "commitSha", commitSha
-                ))
-                .retrieve()
-                .toBodilessEntity();
+                ),
+                Void.class
+        );
 
 
     }
 
     public String ProvideAccessT(String username) {
-
-        return restClientbuilder.build()
-                .get()
-                .uri("http://localhost:8080/api/auth/token/{username}", username)
-                .retrieve()
-                .body(String.class);
+        return restTemplate.getForObject(
+                "http://AUTH-SERVICE/api/auth/token/{username}",
+                String.class,
+                username
+        );
     }
 
 }
