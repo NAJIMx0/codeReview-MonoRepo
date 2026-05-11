@@ -118,7 +118,7 @@ services:
         condition: service_started
     environment:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://ms_pg_sql:5432/auth_db
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/auth_db
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka
       - EUREKA_INSTANCE_HOSTNAME=auth-service
       - EUREKA_INSTANCE_PREFERIPADDRESS=true
