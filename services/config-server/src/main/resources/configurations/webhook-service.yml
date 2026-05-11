@@ -3,16 +3,17 @@ server:
 spring:
   data:
     mongodb:
-      uri:  mongodb://najim:najim@localhost:27017/webhook_db?authSource=admin
+      uri:   mongodb://najim:najim@mongo_db:27017/webhook_db?authSource=admin
 
 eureka:
   instance:
-    hostname: localhost
+    hostname: webhook-service
+    prefer-ip-address: true
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      default-zone: http://${eureka.instance.hostname}:8761/eureka
+      defaultZone: http://discovery-service:8761/eureka
 
 
 
