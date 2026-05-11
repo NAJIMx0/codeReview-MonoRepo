@@ -4,7 +4,7 @@ spring:
   application:
     name: webhook-service
   mongodb:
-    host: localhost
+    host: mongo_db
     port: 27017
     username: najim
     password: najim
