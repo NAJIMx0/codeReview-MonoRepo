@@ -1,0 +1,8 @@
+[project]
+name = "codereview-fastapi"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "pycodestyle>=2.14.0",
+    "radon>=6.0.1",
+]

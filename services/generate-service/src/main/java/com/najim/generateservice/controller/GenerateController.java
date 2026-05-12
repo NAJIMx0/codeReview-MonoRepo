@@ -17,7 +17,7 @@ public class GenerateController {
     public final GenerateService generateService;
 
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
-
+//end point sse
     @GetMapping("/stream")
     public SseEmitter stream() {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
@@ -31,11 +31,13 @@ public class GenerateController {
     public ResponseEntity<?> caller(@RequestBody PushEventRequest payload) {
         return ResponseEntity.ok(generateService.HandelPayload(payload));
     }
+
     // catch the review json from fastapi-service
     @PostMapping("/holler")
     public ResponseEntity<?> holler(@RequestBody Object fastApiResponse) {
         for (SseEmitter emitter : emitters) {
             try {
+                // send it to front
                 emitter.send(fastApiResponse);
             } catch (Exception e) {
                 emitters.remove(emitter);

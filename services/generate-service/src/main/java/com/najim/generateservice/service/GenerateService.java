@@ -32,57 +32,79 @@ public class GenerateService {
         List<FileReviewRequest> ListfileReviewRequests = new ArrayList<>();
         System.out.println("token received: " + accessToken);
         for(String filepath : changedFiles) {
+            // skipi had .idea , .git  . no test
 
             if (filepath.startsWith(".idea") || filepath.startsWith(".git")) {
                 continue;
             }
+            if (!filepath.endsWith(".py")) continue;
+
             System.out.println("trying: https://api.github.com/repos/" + repoName + "/contents/" + filepath);
             try {
+                // sift req bach takod code
                 Map<String, Object> response = RestClient.create()
                         .get()
                         .uri("https://api.github.com/repos/" + repoName + "/contents/" + filepath)
                         .header("Authorization", "Bearer " + accessToken)
                         .retrieve()
                         .body(Map.class);
+
                 String encoded = (String) response.get("content");
+
                 byte[] decoded = Base64.getDecoder().decode(encoded.replaceAll("\\n", ""));
                 String contentCode = new String(decoded);
+
                 ListfileReviewRequests.add(new FileReviewRequest(filepath, contentCode));
+
             } catch (Exception e) {
+
                 System.out.println("skipping file: " + filepath + " reason: " + e.getMessage());
             }
         }
+        if (!ListfileReviewRequests.isEmpty()) {
+            sendToFastApi(repoName, ListfileReviewRequests);
+        }
+
         System.out.println(ListfileReviewRequests);
 //        sendToFastApi(ListfileReviewRequests);
         return ListfileReviewRequests;
 
     }
-
-    private void sendToFastApi(List<FileReviewRequest> files) {
+        //  Post to FastAPI /analyze
+    private void sendToFastApi(String repoName,List<FileReviewRequest> files) {
         try {
-            RestClient.create()
+            Map<String, Object> body = Map.of(
+                    "repoName", repoName,
+                    "files", files
+            );
+
+            Object fastApiResponse = RestClient.create()
                     .post()
-                    .uri("http://localhost:8181/api/fastapi/input")
+                    .uri("http://fastapi-service:8181/analyze")   // docker-compose service name
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                    .body(files)
+                    .body(body)
                     .retrieve()
-                    .toBodilessEntity();
+                    .body(Map.class);
+
+            System.out.println("FastAPI response received, forwarding to SSE...");
+            sendToFrontViaSse(fastApiResponse);
+
         } catch (Exception e) {
             System.out.println("FastAPI call failed: " + e.getMessage());
         }
     }
 
-    public  void SendToFront(Object fastApiResponse) {
+    public  void sendToFrontViaSse(Object fastApiResponse) {
         try {
             RestClient.create()
                     .post()
-                    .uri("http://localhost:5173/review")
+                    .uri("http://localhost:8998/api/generate/holler")
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                     .body(fastApiResponse)
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
-            System.out.println("FrontEnd call failed: " + e.getMessage());
+            System.out.println("SSE failed: " + e.getMessage());
         }
 
     }

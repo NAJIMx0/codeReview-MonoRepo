@@ -167,6 +167,16 @@ services:
       - EUREKA_INSTANCE_PREFERIPADDRESS=true
     restart: unless-stopped
 
+  fastapi-service:
+    container_name: fastapi-service
+    build:
+      context: ./services/fastapi-service
+    ports:
+      - 8181:8181
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
 networks:
   microservices-net:
     driver: bridge
