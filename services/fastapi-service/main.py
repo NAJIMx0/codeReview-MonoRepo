@@ -22,9 +22,6 @@ app.add_middleware(
 )
 
 
-# ──────────────────────────────────────────────
-#  Input / Output models
-# ──────────────────────────────────────────────
 
 class FileInput(BaseModel):
     Filename: str
@@ -35,9 +32,6 @@ class AnalyzeRequest(BaseModel):
     repoName: str = ""
 
 
-# ──────────────────────────────────────────────
-#  Helpers
-# ──────────────────────────────────────────────
 
 def complexity_label(cc: int) -> str:
     """Map radon cyclomatic complexity score to Big-O estimate + explanation."""
