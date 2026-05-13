@@ -224,7 +224,7 @@ def score_file(complexity: dict, style: dict, duplication: dict) -> int:
 
     score = max(score, 60)  # floor after complexity
 
-    # style penalty (max -30, 1 pt per issue, cap 30)
+    # style pe nalty (max -30, 1 pt per issue, cap 30)
     style_penalty = min(style.get("total_issues", 0), 30)
     score -= style_penalty
 
@@ -234,10 +234,7 @@ def score_file(complexity: dict, style: dict, duplication: dict) -> int:
 
     return max(score, 0)
 
-
-# ──────────────────────────────────────────────
-#  Routes
-# ──────────────────────────────────────────────
+# routes
 
 @app.get("/health")
 def health():
