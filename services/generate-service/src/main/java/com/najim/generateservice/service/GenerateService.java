@@ -77,10 +77,10 @@ public class GenerateService {
                     "repoName", repoName,
                     "files", files
             );
-
+            // sift to analyse service
             Object fastApiResponse = RestClient.create()
                     .post()
-                    .uri("http://fastapi-service:8181/analyze")   // docker-compose service name
+                    .uri("http://fastapi-service:8181/analyze")
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()

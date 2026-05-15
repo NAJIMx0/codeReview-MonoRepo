@@ -11,6 +11,7 @@ import re
 import radon.complexity as radon_cc
 import radon.metrics as radon_metrics
 import pycodestyle
+import httpx
 
 app = FastAPI(title="CodeReview AI — Analyzer", version="1.0.0")
 
@@ -277,7 +278,24 @@ def analyze(request: AnalyzeRequest):
             "duplication": duplication,
         })
 
-    return {"repo": request.repoName, "files_analyzed": len(results), "results": results}
+    response_payload = {
+        "repo": request.repoName,
+        "files_analyzed": len(results),
+        "results": results
+    }
+
+    # Forward to generate-service SSE holler endpoint
+    try:
+        httpx.post(
+            "http://generate-service:8998/api/generate/holler",
+            json=response_payload,
+            timeout=5
+        )
+    except Exception as e:
+        print(f"Could not forward to generate-service: {e}")
+
+    return response_payload
+
 
 
 @app.post("/complexity")
