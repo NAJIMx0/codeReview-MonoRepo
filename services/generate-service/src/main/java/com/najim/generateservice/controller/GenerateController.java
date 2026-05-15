@@ -16,8 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class GenerateController {
     public final GenerateService generateService;
 
-    private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
-//end point sse
+    //end point sse
     @GetMapping("/stream")
     public SseEmitter stream() {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);

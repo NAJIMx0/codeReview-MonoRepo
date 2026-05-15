@@ -5,4 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface PushEventRepository extends MongoRepository<PushEvent, String> {
 
+    boolean existsByCommitSha(String commitSha);
 }

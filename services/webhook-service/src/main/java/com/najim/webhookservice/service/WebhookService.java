@@ -62,6 +62,14 @@ public class WebhookService {
 
         System.out.println("SERVICE CALLED - files: " + payload.get("commits"));
 
+        Map<String, Object> headCommit = (Map<String, Object>) payload.get("head_commit");
+        String commitSha = headCommit != null ? (String) headCommit.get("id") : null;
+
+        // Skip if already processed
+        if (commitSha != null && repository.existsByCommitSha(commitSha)) {
+            System.out.println("Already processed commit: " + commitSha + " — skipping");
+            return;
+        }
 
         List<Map<String, Object>> commits = (List<Map<String, Object>>) payload.get("commits");
         if (commits == null || commits.isEmpty()) {
@@ -72,8 +80,6 @@ public class WebhookService {
         Map<String, Object> repo = (Map<String, Object>) payload.get("repository");
         String repoName = (String) repo.get("full_name");
 
-        Map<String, Object> headCommit = (Map<String, Object>) payload.get("head_commit");
-        String commitSha = headCommit != null ? (String) headCommit.get("id") : "unknown";
 
         Map<String, Object> pusher = (Map<String, Object>) payload.get("pusher");
         String pusherName = pusher != null ? (String) pusher.get("name") : "unknown";
