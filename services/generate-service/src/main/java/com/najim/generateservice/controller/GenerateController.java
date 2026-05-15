@@ -21,9 +21,9 @@ public class GenerateController {
     @GetMapping("/stream")
     public SseEmitter stream() {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-        emitters.add(emitter);
-        emitter.onCompletion(() -> emitters.remove(emitter));
-        emitter.onTimeout(() -> emitters.remove(emitter));
+        generateService.getEmitters().add(emitter);
+        emitter.onCompletion(() -> generateService.getEmitters().remove(emitter));
+        emitter.onTimeout(()    -> generateService.getEmitters().remove(emitter));
         return emitter;
     }
     // cathc the payload from webhook-service
@@ -35,14 +35,7 @@ public class GenerateController {
     // catch the review json from fastapi-service
     @PostMapping("/holler")
     public ResponseEntity<?> holler(@RequestBody Object fastApiResponse) {
-        for (SseEmitter emitter : emitters) {
-            try {
-                // send it to front
-                emitter.send(fastApiResponse);
-            } catch (Exception e) {
-                emitters.remove(emitter);
-            }
-        }
-        return ResponseEntity.ok("send it");
+        generateService.sendToFrontViaSse(fastApiResponse);
+        return ResponseEntity.ok("sent");
     }
 }
