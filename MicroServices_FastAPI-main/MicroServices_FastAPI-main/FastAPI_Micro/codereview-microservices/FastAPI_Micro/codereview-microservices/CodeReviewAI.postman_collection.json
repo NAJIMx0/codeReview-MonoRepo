@@ -1,0 +1,418 @@
+{
+  "info": {
+    "_postman_id": "codereview-ai-microservices",
+    "name": "CodeReview AI — Microservices",
+    "description": "Full test suite for the CodeReview AI microservice stack.\n\nEndpoints:\n  • Orchestrator     → localhost:8000  (Spring Boot talks here)\n  • Complexity svc   → localhost:8001\n  • Style svc        → localhost:8002\n  • Duplication svc  → localhost:8003\n\nSet the environment variables before running:\n  base_url_orchestrator, base_url_complexity,\n  base_url_style, base_url_duplication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+
+  "variable": [
+    { "key": "base_url_orchestrator",  "value": "http://localhost:8000" },
+    { "key": "base_url_complexity",    "value": "http://localhost:8001" },
+    { "key": "base_url_style",         "value": "http://localhost:8002" },
+    { "key": "base_url_duplication",   "value": "http://localhost:8003" }
+  ],
+
+  "item": [
+
+    {
+      "name": "Health Checks",
+      "item": [
+
+        {
+          "name": "Orchestrator — health",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url_orchestrator}}/health",
+            "description": "Verify the orchestrator is running."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('status ok', () => pm.expect(b.status).to.eql('ok'));",
+                  "pm.test('service is orchestrator', () => pm.expect(b.service).to.eql('orchestrator'));"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Orchestrator — health/services",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url_orchestrator}}/health/services",
+            "description": "Pings all three downstream microservices and reports aggregated health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('has services key', () => pm.expect(b).to.have.property('services'));",
+                  "['complexity','style','duplication'].forEach(svc => {",
+                  "  pm.test(svc + ' reachable', () => pm.expect(b.services[svc].status).to.eql('ok'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Complexity — health",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url_complexity}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('service is complexity', () => pm.expect(pm.response.json().service).to.eql('complexity'));"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Style — health",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url_style}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('service is style', () => pm.expect(pm.response.json().service).to.eql('style'));"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Duplication — health",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url_duplication}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('service is duplication', () => pm.expect(pm.response.json().service).to.eql('duplication'));"
+                ]
+              }
+            }
+          ]
+        }
+
+      ]
+    },
+
+    {
+      "name": "Orchestrator — Full Flow",
+      "item": [
+
+        {
+          "name": "Analyze — single Python file (happy path)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url_orchestrator}}/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repoName\": \"my-repo\",\n  \"files\": [\n    {\n      \"Filename\": \"example.py\",\n      \"Content\": \"def add(a, b):\\n    return a + b\\n\\ndef subtract(a, b):\\n    return a - b\\n\"\n    }\n  ]\n}"
+            },
+            "description": "Full orchestration: sends one Python file, gets back merged complexity + style + duplication + score."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('has repo', () => pm.expect(b).to.have.property('repo'));",
+                  "pm.test('files_analyzed is 1', () => pm.expect(b.files_analyzed).to.eql(1));",
+                  "const r = b.results[0];",
+                  "pm.test('file is example.py', () => pm.expect(r.file).to.eql('example.py'));",
+                  "pm.test('has quality_score', () => pm.expect(r).to.have.property('quality_score'));",
+                  "pm.test('quality_score in range', () => pm.expect(r.quality_score).to.be.within(0, 100));",
+                  "pm.test('has complexity', () => pm.expect(r).to.have.property('complexity'));",
+                  "pm.test('has style',      () => pm.expect(r).to.have.property('style'));",
+                  "pm.test('has duplication', () => pm.expect(r).to.have.property('duplication'));",
+                  "pm.environment.set('last_score', r.quality_score);"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Analyze — multiple files (mixed Python + non-Python)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url_orchestrator}}/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repoName\": \"mixed-repo\",\n  \"files\": [\n    {\n      \"Filename\": \"utils.py\",\n      \"Content\": \"def greet(name):\\n    print('Hello ' + name)\\n\\ndef greet2(name):\\n    print('Hello ' + name)\\n\"\n    },\n    {\n      \"Filename\": \"README.md\",\n      \"Content\": \"# My Project\"\n    },\n    {\n      \"Filename\": \"complex.py\",\n      \"Content\": \"def classify(x):\\n    if x > 100:\\n        if x > 500:\\n            if x > 1000:\\n                return 'huge'\\n            return 'large'\\n        elif x > 200:\\n            return 'medium-large'\\n        return 'medium'\\n    elif x > 50:\\n        return 'small-medium'\\n    elif x > 10:\\n        return 'small'\\n    return 'tiny'\\n\"\n    }\n  ]\n}"
+            },
+            "description": "3 files: 2 Python (one with duplicate functions, one with high complexity), 1 Markdown (should be skipped)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('files_analyzed is 3', () => pm.expect(b.files_analyzed).to.eql(3));",
+                  "const md = b.results.find(r => r.file === 'README.md');",
+                  "pm.test('README.md is skipped', () => pm.expect(md.skipped).to.be.true);",
+                  "const utils = b.results.find(r => r.file === 'utils.py');",
+                  "pm.test('utils.py has duplications', () => pm.expect(utils.duplication.total_duplications).to.be.above(0));",
+                  "const cx = b.results.find(r => r.file === 'complex.py');",
+                  "pm.test('complex.py analyzed', () => pm.expect(cx).to.have.property('quality_score'));"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Analyze — syntax error file",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url_orchestrator}}/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repoName\": \"broken-repo\",\n  \"files\": [\n    {\n      \"Filename\": \"broken.py\",\n      \"Content\": \"def oops(:\\n    pass\\n\"\n    }\n  ]\n}"
+            },
+            "description": "Sends a file with a SyntaxError — services should return error fields, not crash."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 (graceful degradation)', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('files_analyzed is 1', () => pm.expect(b.files_analyzed).to.eql(1));",
+                  "const r = b.results[0];",
+                  "pm.test('complexity has error field', () => pm.expect(r.complexity).to.have.property('error'));"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Analyze — with inline callbackUrl",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url_orchestrator}}/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repoName\": \"callback-test\",\n  \"callbackUrl\": \"http://httpbin.org/post\",\n  \"files\": [\n    {\n      \"Filename\": \"main.py\",\n      \"Content\": \"x = 1\\ny = x + 1\\n\"\n    }\n  ]\n}"
+            },
+            "description": "Demonstrates the Spring Boot callback. Uses httpbin as a stand-in — replace callbackUrl with your real Spring Boot endpoint."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('result returned synchronously too', () => pm.expect(pm.response.json()).to.have.property('results'));"
+                ]
+              }
+            }
+          ]
+        }
+
+      ]
+    },
+
+    {
+      "name": "Individual Services (direct)",
+      "description": "Hit each microservice directly, bypassing the orchestrator. Useful for isolating a specific service during debugging.",
+      "item": [
+
+        {
+          "name": "Complexity — analyze directly",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url_complexity}}/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repoName\": \"direct-test\",\n  \"files\": [\n    {\n      \"Filename\": \"algo.py\",\n      \"Content\": \"def bubble_sort(arr):\\n    n = len(arr)\\n    for i in range(n):\\n        for j in range(n - i - 1):\\n            if arr[j] > arr[j + 1]:\\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\\n    return arr\\n\"\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('is array', () => pm.expect(b).to.be.an('array'));",
+                  "pm.test('has file key', () => pm.expect(b[0]).to.have.property('file'));",
+                  "pm.test('has functions key', () => pm.expect(b[0]).to.have.property('functions'));",
+                  "pm.test('has overall_big_o', () => pm.expect(b[0]).to.have.property('overall_big_o'));",
+                  "pm.test('bubble_sort detected', () => {",
+                  "  const fn = b[0].functions.find(f => f.name === 'bubble_sort');",
+                  "  pm.expect(fn).to.exist;",
+                  "  pm.expect(fn.cyclomatic_complexity).to.be.above(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Style — analyze directly",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url_style}}/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repoName\": \"direct-test\",\n  \"files\": [\n    {\n      \"Filename\": \"messy.py\",\n      \"Content\": \"import os,sys\\nx=1\\ndef foo( a,b ):\\n    return a+b\\n\"\n    }\n  ]\n}"
+            },
+            "description": "The file has intentional PEP-8 violations: no spaces around operators, imports on one line, etc."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('is array', () => pm.expect(b).to.be.an('array'));",
+                  "pm.test('has total_issues', () => pm.expect(b[0]).to.have.property('total_issues'));",
+                  "pm.test('found style issues', () => pm.expect(b[0].total_issues).to.be.above(0));",
+                  "pm.test('issues have line/col/code/message', () => {",
+                  "  const i = b[0].issues[0];",
+                  "  pm.expect(i).to.have.all.keys('line','col','code','message');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Duplication — analyze directly",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url_duplication}}/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repoName\": \"direct-test\",\n  \"files\": [\n    {\n      \"Filename\": \"dup.py\",\n      \"Content\": \"LIMIT = 100\\n\\ndef validate(x):\\n    if x > LIMIT:\\n        return False\\n    return True\\n\\ndef check(x):\\n    if x > LIMIT:\\n        return False\\n    return True\\n\\nMAX = 100\\n\"\n    }\n  ]\n}"
+            },
+            "description": "File with two identically-bodied functions (validate / check) and a repeated assignment."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('is array', () => pm.expect(b).to.be.an('array'));",
+                  "pm.test('has total_duplications', () => pm.expect(b[0]).to.have.property('total_duplications'));",
+                  "pm.test('detected dup functions', () => pm.expect(b[0].duplicated_functions.length).to.be.above(0));",
+                  "pm.test('dup functions have suggestion', () => {",
+                  "  pm.expect(b[0].duplicated_functions[0]).to.have.property('suggestion');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+
+      ]
+    },
+
+    {
+      "name": "Edge Cases",
+      "item": [
+
+        {
+          "name": "Empty files array",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url_orchestrator}}/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repoName\": \"empty\",\n  \"files\": []\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('files_analyzed is 0', () => pm.expect(pm.response.json().files_analyzed).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "Non-Python file only",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url_orchestrator}}/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repoName\": \"java-repo\",\n  \"files\": [\n    {\n      \"Filename\": \"Main.java\",\n      \"Content\": \"public class Main { public static void main(String[] args) {} }\"\n    }\n  ]\n}"
+            },
+            "description": "Non-Python files should be returned with skipped:true, never crash."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json().results[0];",
+                  "pm.test('file is skipped', () => pm.expect(r.skipped).to.be.true);",
+                  "pm.test('has reason', () => pm.expect(r).to.have.property('reason'));"
+                ]
+              }
+            }
+          ]
+        }
+
+      ]
+    }
+
+  ]
+}
