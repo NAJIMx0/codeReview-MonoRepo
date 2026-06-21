@@ -3,3 +3,12 @@ spring:
     import: optional:configserver:http://config-server:8888
   application:
     name: generate-service
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      group-id: generate-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  mongodb:
+    uri: mongodb://najim:najim@mongo_db:27017/webhook_db?authSource=admin

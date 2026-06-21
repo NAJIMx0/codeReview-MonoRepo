@@ -123,11 +123,11 @@ public class GenerateService {
         return ListfileReviewRequests;
 
     }
-        //  Post to FastAPI /analyze
+    //  Post to orchestrator (FastAPI microservices) /analyze
     private void sendToFastApi(String repoName,List<FileReviewRequest> files) {
 
-        logHeader("GENERATE SERVICE — sending to FastAPI");
-        logField("endpoint", "http://fastapi-service:8181/analyze");
+        logHeader("GENERATE SERVICE — sending to orchestrator");
+        logField("endpoint", "http://orchestrator:8000/analyze");
         logField("files",    String.valueOf(files.size()));
 
         try {
@@ -144,20 +144,23 @@ public class GenerateService {
                     "files",    fileMaps
             );
 
-            // sift to analyse service
-             RestClient.create()
+            // sift to orchestrator — it fans out to complexity/style/duplication,
+            // then publishes the merged result to Kafka itself (topic: review.result).
+            // We don't need to do anything with the HTTP response here anymore —
+            // ReviewResultConsumer picks the real result up from Kafka.
+            RestClient.create()
                     .post()
-                    .uri("http://fastapi-service:8181/analyze")
+                    .uri("http://orchestrator:8000/analyze")
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()
                     .toBodilessEntity();
 
-            logSuccess("FastAPI accepted the request");
+            logSuccess("orchestrator accepted the request");
 
 
         } catch (Exception e) {
-            logError("FastAPI call failed — " + e.getMessage());
+            logError("orchestrator call failed — " + e.getMessage());
         }
         logFooter();
     }

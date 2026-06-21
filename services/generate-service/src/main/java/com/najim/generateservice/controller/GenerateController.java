@@ -16,7 +16,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class GenerateController {
     public final GenerateService generateService;
 
-    //end point sse
     @GetMapping("/stream")
     public SseEmitter stream() {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
@@ -25,16 +24,15 @@ public class GenerateController {
         emitter.onTimeout(()    -> generateService.getEmitters().remove(emitter));
         return emitter;
     }
-    // cathc the payload from webhook-service
+
     @PostMapping("/caller")
     public ResponseEntity<?> caller(@RequestBody PushEventRequest payload) {
         return ResponseEntity.ok(generateService.HandelPayload(payload));
     }
 
-    // catch the review json from fastapi-service
-    @PostMapping("/holler")
-    public ResponseEntity<?> holler(@RequestBody Object fastApiResponse) {
-        generateService.sendToFrontViaSse(fastApiResponse);
-        return ResponseEntity.ok("sent");
-    }
+//    @PostMapping("/holler")
+//    public ResponseEntity<?> holler(@RequestBody Object fastApiResponse) {
+//        generateService.sendToFrontViaSse(fastApiResponse);
+//        return ResponseEntity.ok("sent");
+//    }
 }
