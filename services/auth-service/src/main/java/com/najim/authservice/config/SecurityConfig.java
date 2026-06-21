@@ -18,7 +18,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
-
+import org.springframework.security.web.savedrequest.NullRequestCache;
 
 
 @Configuration
@@ -32,6 +32,7 @@ public class SecurityConfig {
     public SecurityFilterChain FilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .requestCache(cache -> cache.requestCache(new NullRequestCache()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/logout", "/api/auth/revoke").permitAll()
                         .requestMatchers("/api/auth/token/**").permitAll()
@@ -65,6 +66,7 @@ public class SecurityConfig {
                             cookie.setMaxAge(0);
                             cookie.setPath("/");
                             cookie.setHttpOnly(true);
+                            cookie.setDomain("localhost"); // ← this was missing, must match the original cookie's domain exactly
                             response.addCookie(cookie);
                         })
                         .logoutSuccessHandler((req, res, auth) -> {

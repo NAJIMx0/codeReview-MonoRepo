@@ -56,5 +56,9 @@ public class AuthController {
     public ResponseEntity<String> getTokenByUsername(@PathVariable String username) {
         return ResponseEntity.ok(authService.getTokenByUsername(username));
     }
+    @DeleteMapping("/connected-repos/{repoName}")
+    public ResponseEntity<?> disconnectRepo(@PathVariable String repoName, OAuth2AuthenticationToken token) {
+        return ResponseEntity.ok(authService.disconnectRepo(repoName, token));
+    }
 
 }

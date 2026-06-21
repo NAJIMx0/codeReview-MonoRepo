@@ -169,5 +169,50 @@ private final GithubUserRepository githubUserRepository;
         }
     }
 
+    public Map<String, Object> disconnectRepo(String repoName, OAuth2AuthenticationToken token) {
+        Map<String, Object> attributes = token.getPrincipal().getAttributes();
+        String githubId = String.valueOf(attributes.get("id"));
+
+        Optional<ConnectedRepo> existing = connectedRepoRepository.findByGithubIdAndRepoName(githubId, repoName);
+        if (existing.isEmpty()) {
+            return Map.of("status", "not_found", "repo", repoName);
+        }
+        ConnectedRepo repo = existing.get();
+
+        // best-effort: remove the GitHub webhook too, so pushes stop arriving
+        try {
+            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                    token.getAuthorizedClientRegistrationId(),
+                    token.getName()
+            );
+            String accessToken = client.getAccessToken().getTokenValue();
+            RestClient restClient = RestClient.create();
+
+            List<Map<String, Object>> hooks = restClient.get()
+                    .uri("https://api.github.com/repos/" + repo.getOwner() + "/" + repo.getRepoName() + "/hooks")
+                    .header("Authorization", "Bearer " + accessToken)
+                    .retrieve()
+                    .body(List.class);
+
+            if (hooks != null) {
+                for (Map<String, Object> hook : hooks) {
+                    Map<String, Object> config = (Map<String, Object>) hook.get("config");
+                    String url = config != null ? String.valueOf(config.get("url")) : "";
+                    if (url.contains("/api/webhook/github")) {
+                        restClient.delete()
+                                .uri("https://api.github.com/repos/" + repo.getOwner() + "/" + repo.getRepoName() + "/hooks/" + hook.get("id"))
+                                .header("Authorization", "Bearer " + accessToken)
+                                .retrieve()
+                                .toBodilessEntity();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Webhook removal failed (non-critical): " + e.getMessage());
+        }
+
+        connectedRepoRepository.delete(repo);
+        return Map.of("status", "disconnected", "repo", repoName);
+    }
 
 }

@@ -67,39 +67,35 @@ def build_prompt(file_result: dict) -> str:
 File: {filename}
 Quality score: {score}/100
 
-Static analysis results (these tools have real limitations — style only
-checks PEP8 formatting, duplication only checks identical whole-function
-bodies and identical variable assignments, so they can both miss
-duplicated logic blocks within a single function):
+Static analysis (style = PEP8 only, duplication = exact-match only — both can
+miss things, so also read the source code yourself):
 
-Complexity analysis:
-{json.dumps(complexity, indent=2)}
+Complexity: {json.dumps(complexity)}
+Style: {json.dumps(style)}
+Duplication: {json.dumps(duplication)}
 
-Style issues (PEP8 only):
-{json.dumps(style, indent=2)}
-
-Duplication issues (exact-match only):
-{json.dumps(duplication, indent=2)}
-
-Actual source code:
+Source code:
 ```python
 {content}
 ```
 
-Write a short, direct code review comment (3-5 sentences) based on all of
-this. Specifically look at the actual source code yourself for:
-- Repeated or near-identical logic blocks (e.g. two loops computing
-  similar things with different variable names) — the static duplication
-  checker above only catches exact matches, so check this yourself by
-  reading the code.
-- Naming or structure issues that a formatter wouldn't catch (e.g.
-  numbered variable names like "total2", "count2" suggesting copy-paste).
-- Anything genuinely concerning that the metrics above don't capture.
+Write a code review with exactly these four lines, in this order, plain
+text, NO markdown (no ##, no **, no bullet points):
 
-Be specific and actionable — mention concrete fixes, not generic advice.
-If the code is genuinely clean with no real issues, say so briefly instead
-of inventing problems. Do not repeat the raw numbers back verbatim;
-explain what they mean in practice."""
+Complexity: <ONE sentence, max 30 words. Name the function and the
+specific cause if it's an issue.>
+Style: <ONE sentence, max 30 words. Name the most important issue with
+a line number, or say briefly why it's clean.>
+Duplication: <ONE sentence, max 30 words. Read the code yourself — name
+specific functions/variables if you spot repeated logic, even if the
+static count is 0.>
+Suggested fix: <ONE sentence, max 30 words. The single highest-value,
+concrete change — specific enough to act on directly.>
+
+Each line must contain real, specific information from the actual code —
+not filler like "the code is clean" with no reason, but still just ONE
+sentence per line. Do not add anything before, between, or after these
+four lines."""
 
 
 def get_ai_review(file_result: dict) -> str:
@@ -111,8 +107,8 @@ def get_ai_review(file_result: dict) -> str:
         response = groq_client.chat.completions.create(
             model=GROQ_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.4,
-            max_tokens=400,
+            temperature=0.3,
+            max_tokens=250,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:

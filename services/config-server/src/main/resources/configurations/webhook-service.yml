@@ -4,11 +4,11 @@ spring:
   data:
     mongodb:
       uri:   mongodb://najim:najim@mongo_db:27017/webhook_db?authSource=admin
-  kafka:
-    bootstrap-servers: kafka:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+#  kafka:
+#    bootstrap-servers: kafka:9092
+#    producer:
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 
 eureka:
