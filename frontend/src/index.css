@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Terminal';
+  src: local('Courier New'), local('Consolas'), local('monospace');
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+body {
+  background-color: #000000;
+  color: #d4d4d4;
+  font-family: 'Courier New', Consolas, 'Fira Code', monospace;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LIGHT MODE
+   A full, consistent palette swap rather than spot-patching individual
+   classes — every background/text/border tier gets a matching light
+   equivalent so contrast stays correct everywhere, not just on the
+   classes that happened to get tested.
+   ─────────────────────────────────────────────────────────────────── */
+
+html.light body {
+  background-color: #f4f4f2;
+  color: #1a1a1a;
+}
+
+/* Page / panel backgrounds, darkest to lightest in dark mode → lightest
+   to darkest equivalents in light mode, keeping the same relative steps */
+html.light .bg-black { background-color: #ffffff !important; }
+html.light .bg-black\/60 { background-color: rgba(255, 255, 255, 0.85) !important; }
+html.light .bg-black\/40 { background-color: rgba(255, 255, 255, 0.7) !important; }
+html.light .bg-\[\#0a0a0a\] { background-color: #ffffff !important; }
+html.light .bg-\[\#0d0d0d\] { background-color: #f0f0ee !important; }
+html.light .bg-\[\#111\] { background-color: #ececea !important; }
+html.light .bg-gray-900 { background-color: #ececea !important; }
+html.light .bg-gray-900\/30 { background-color: rgba(0, 0, 0, 0.04) !important; }
+html.light .bg-gray-900\/20 { background-color: rgba(0, 0, 0, 0.03) !important; }
+
+/* Text — invert the gray scale */
+html.light .text-white { color: #0a0a0a !important; }
+html.light .text-gray-300 { color: #2a2a2a !important; }
+html.light .text-gray-400 { color: #444444 !important; }
+html.light .text-gray-500 { color: #5e5e5e !important; }
+html.light .text-gray-600 { color: #7a7a7a !important; }
+html.light .text-gray-700 { color: #9a9a9a !important; }
+html.light .text-gray-800 { color: #b5b5b3 !important; }
+
+/* Borders */
+html.light .border-gray-700 { border-color: #d8d8d5 !important; }
+html.light .border-gray-800 { border-color: #e2e2df !important; }
+html.light .border-gray-600 { border-color: #c5c5c1 !important; }
+html.light .border-gray-900 { border-color: #ebebe8 !important; }
+
+/* Green accents stay green but deepen slightly for AA contrast on a
+   white background (pure bright green is too light to read on white). */
+html.light .text-green-400 { color: #15803d !important; }
+html.light .border-green-700 { border-color: #16a34a !important; }
+html.light .border-green-900 { border-color: #bbf7d0 !important; }
+html.light .bg-green-950 { background-color: #dcfce7 !important; }
+html.light .bg-green-400 { background-color: #16a34a !important; }
+html.light .hover\:bg-green-400:hover { background-color: #15803d !important; }
+html.light .hover\:text-black:hover { color: #ffffff !important; }
+
+/* Red accents (danger zone, disconnect) — same idea */
+html.light .text-red-500 { color: #dc2626 !important; }
+html.light .border-red-900 { border-color: #fecaca !important; }
+html.light .border-red-950 { border-color: #fee2e2 !important; }
+html.light .bg-red-950 { background-color: #fee2e2 !important; }
+
+/* Yellow accents (warnings, mid-range scores) */
+html.light .text-yellow-400 { color: #ca8a04 !important; }
+html.light .border-yellow-700 { border-color: #eab308 !important; }
+html.light .bg-yellow-950 { background-color: #fef9c3 !important; }
+html.light .border-yellow-900 { border-color: #fef08a !important; }
+html.light .bg-yellow-950\/20 { background-color: rgba(254, 249, 195, 0.5) !important; }
+
+/* Gradients used as divider lines */
+html.light .from-gray-600 { --tw-gradient-from: #d8d8d5 !important; }
+html.light .via-gray-500 { --tw-gradient-via: #c5c5c1 !important; }
+
+/* Backdrop blur panels need a real background or they show the page
+   behind them as a visible "seam" against solid white panels nearby */
+html.light .backdrop-blur-sm {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
