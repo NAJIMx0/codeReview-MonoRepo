@@ -21,45 +21,7 @@ AI-powered code review platform that automatically analyzes code changes on ever
 
 ## Architecture
 
-```
-                    +------------------------------------------------------+
-                    |                    GitHub                            |
-                    |         (Push Event -> Webhook -> OAuth)              |
-                    +------------+---------------------+------------------+
-                                 |                     |
-                         +-------v-------+    +--------v--------+
-                         |  auth-service |    | webhook-service |
-                         |   (8080)      |    |    (8999)       |
-                         | GitHub OAuth  |    | Receive Events  |
-                         | Webhook Mgmt  |    | Store to MongoDB|
-                         +-------+-------+    +--------+--------+
-                                 |                     |
-                         +-------v---------------------v--------+
-                         |           generate-service           |
-                         |             (8998)                   |
-                         |     Fetch changed files via API      |
-                         +----------------+---------------------+
-                                          |
-                                   +------v------+
-                                   |    Kafka    |
-                                   |   (9092)    |
-                                   +------+------+
-                          +---------------v----------------+
-                          |         orchestrator           |
-                          |       (8181 / :8000)           |
-                          |  Coordinates review pipeline   |
-                          +--+----------+----------+-------+
-                             |          |          |
-                     +-------v--+ +-----v----+ +---v--------+
-                     |complexity| |  style   | |duplication  |
-                     | (radon)  | |(pycodest)| |  detection  |
-                     +----------+ +----------+ +-------------+
-                             |
-                     +-------v----------+
-                     | ai-review-service |
-                     |  Groq LLaMA 3.3  |
-                     +------------------+
-```
+<img src="image/zy.png" width="700">
 
 Services register with **Eureka** (discovery-service :8761) and pull config from **Spring Cloud Config** (config-server :8888).
 
@@ -111,9 +73,18 @@ Services register with **Eureka** (discovery-service :8761) and pull config from
 
 ---
 
-## Infrastructure
+## Docker
 
-All infrastructure runs via Docker Compose:
+The entire platform is containerized with Docker. A single `docker-compose.yml` at the root orchestrates all services and infrastructure.
+
+- **Infrastructure containers** — PostgreSQL, MongoDB, Kafka, Zookeeper, pgAdmin, Mongo Express
+- **Service containers** — Config Server, Discovery Service, Auth Service, Webhook Service, Generate Service, Orchestrator, Complexity Service, Style Service, Duplication Service, AI Review Service
+- **Networking** — All containers share a `microservices-net` bridge network for internal communication
+- **Health checks** — Config Server and Discovery Service have health checks to ensure correct startup order
+
+<img src="image/docker.png" width="700">
+
+### Service Ports
 
 | Service | Port | Purpose |
 |---------|------|---------|
